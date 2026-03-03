@@ -10,122 +10,269 @@
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/900/900780.png">
     
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f2f2f7; margin: 0; padding: 20px; padding-top: 40px; color: #1c1c1e; }
-        h1 { text-align: center; font-size: 24px; margin-bottom: 20px; }
+        /* CSS Переменные для светлой/тёмной темы */
+        :root {
+            --bg-color: #f2f2f7;
+            --text-color: #1c1c1e;
+            --card-bg: #ffffff;
+            --border-color: #d1d1d6;
+            --input-bg: #ffffff;
+            --sub-text: #8e8e93;
+            --badge-bg: #e5e5ea;
+            --badge-text: #3a3a3c;
+            --accent: #007aff;
+        }
+
+        body.dark-mode {
+            --bg-color: #000000;
+            --text-color: #f2f2f7;
+            --card-bg: #1c1c1e;
+            --border-color: #38383a;
+            --input-bg: #2c2c2e;
+            --sub-text: #aeaeb2;
+            --badge-bg: #3a3a3c;
+            --badge-text: #e5e5ea;
+            --accent: #0a84ff;
+        }
+
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg-color); margin: 0; padding: 20px; padding-top: 40px; color: var(--text-color); transition: background 0.3s; }
         
-        .card { background: #fff; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        h1 { font-size: 24px; margin: 0; }
+        .theme-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-color); }
+        
+        .card { background: var(--card-bg); border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        
         .form-group { margin-bottom: 10px; }
-        .form-group label { display: block; font-size: 14px; margin-bottom: 5px; color: #8e8e93; }
-        .form-group input { width: 100%; padding: 10px; border: 1px solid #d1d1d6; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
-        button { background: #007aff; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 16px; font-weight: bold; width: 100%; cursor: pointer; }
-        button:active { background: #005bb5; }
+        .form-group label { display: block; font-size: 13px; margin-bottom: 5px; color: var(--sub-text); }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; box-sizing: border-box; font-size: 16px; background: var(--input-bg); color: var(--text-color); }
         
-        .item { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .row { display: flex; gap: 10px; }
+        .row .form-group { flex: 1; }
+
+        button { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 8px; font-size: 16px; font-weight: bold; width: 100%; cursor: pointer; }
+        button:active { opacity: 0.8; }
+        
+        /* Панель инструментов */
+        .tools { display: flex; gap: 10px; margin-bottom: 15px; }
+        .tools button { font-size: 14px; padding: 10px; background: #34c759; }
+        .btn-export { background: #ff9500 !important; }
+
+        .item { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
         .item-info { flex-grow: 1; }
         .item-name { font-weight: bold; font-size: 18px; margin: 0 0 5px 0; }
-        .item-qty { font-size: 16px; margin: 0; color: #3a3a3c; }
+        .item-qty { font-size: 15px; margin: 5px 0; }
         .out-of-stock { color: #ff3b30; font-weight: bold; }
-        .item-img { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; background: #e5e5ea; }
+        .item-img { width: 60px; height: 60px; border-radius: 8px; object-fit: cover; background: var(--border-color); flex-shrink: 0; }
         
-        .controls { display: flex; gap: 5px; }
-        .btn-small { width: 40px; height: 40px; padding: 0; font-size: 20px; border-radius: 8px; }
+        .badges { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
+        .badge { background: var(--badge-bg); color: var(--badge-text); font-size: 11px; padding: 3px 8px; border-radius: 12px; font-weight: 500; }
+
+        .controls { display: flex; gap: 5px; margin-top: 10px; }
+        .btn-small { width: 45px; height: 40px; padding: 0; font-size: 20px; border-radius: 8px; }
         .btn-minus { background: #ff9500; }
         .btn-plus { background: #34c759; }
-        .btn-delete { background: #ff3b30; margin-top: 10px;}
+        .btn-delete { background: #ff3b30; margin-top: 10px; }
+        
+        hr { border: 0; border-top: 1px solid var(--border-color); margin: 20px 0; }
     </style>
 </head>
 <body>
 
-    <h1>📦 База радиодеталей</h1>
+    <div class="header">
+        <h1>📦 Радиодетали</h1>
+        <button class="theme-btn" onclick="toggleTheme()" id="themeIcon">🌙</button>
+    </div>
+
+    <!-- Поиск и Фильтр -->
+    <div class="card">
+        <div class="form-group">
+            <input type="text" id="searchInput" placeholder="🔍 Поиск по названию или месту..." oninput="renderParts()">
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
+            <select id="filterSelect" onchange="renderParts()">
+                <option value="">📁 Все категории</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Экспорт / Импорт -->
+    <div class="tools">
+        <button onclick="exportDB()" class="btn-export">📤 Бэкап</button>
+        <button onclick="document.getElementById('importFile').click()">📥 Загрузить</button>
+        <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importDB(event)">
+    </div>
 
     <!-- Форма добавления -->
     <div class="card">
+        <h3 style="margin-top: 0; margin-bottom: 15px;">➕ Добавить деталь</h3>
         <div class="form-group">
-            <label>Название детали</label>
-            <input type="text" id="partName" placeholder="Например: Резистор 10кОм">
+            <label>Название детали *</label>
+            <input type="text" id="partName" placeholder="Например: LM358">
         </div>
-        <div class="form-group">
-            <label>Количество (шт)</label>
-            <input type="number" id="partQty" placeholder="0">
+        
+        <div class="row">
+            <div class="form-group">
+                <label>Категория (Тип)</label>
+                <input type="text" id="partType" placeholder="Микросхемы, Резисторы...">
+            </div>
+            <div class="form-group">
+                <label>Корпус</label>
+                <input type="text" id="partPackage" placeholder="DIP-8, SMD 0805...">
+            </div>
         </div>
+
+        <div class="row">
+            <div class="form-group">
+                <label>Место хранения</label>
+                <input type="text" id="partLocation" placeholder="Коробка 1, Ячейка 5">
+            </div>
+            <div class="form-group">
+                <label>Кол-во (шт) *</label>
+                <input type="number" id="partQty" placeholder="0">
+            </div>
+        </div>
+
         <div class="form-group">
-            <label>Фотография (опционально)</label>
+            <label>Фотография</label>
             <input type="file" id="partPhoto" accept="image/*">
         </div>
-        <button onclick="addPart()">Добавить в базу</button>
+        <button onclick="addPart()">Сохранить в базу</button>
     </div>
+
+    <hr>
 
     <!-- Список деталей -->
     <div id="partsList"></div>
 
     <script>
-        // Загрузка базы из памяти телефона
+        // --- 1. ИНИЦИАЛИЗАЦИЯ И ТЕМА ---
         let partsDB = JSON.parse(localStorage.getItem('radioPartsDB')) ||[];
+        
+        // Добавляем уникальные ID старым деталям (для обратной совместимости)
+        partsDB.forEach(part => { if (!part.id) part.id = Date.now() + Math.random(); });
 
-        // Функция отрисовки списка
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        if (currentTheme === 'dark') {
+            document.body.classList.add('dark-mode');
+            document.getElementById('themeIcon').innerText = '☀️';
+        }
+
+        function toggleTheme() {
+            const isDark = document.body.classList.toggle('dark-mode');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            document.getElementById('themeIcon').innerText = isDark ? '☀️' : '🌙';
+        }
+
+        // --- 2. РЕНДЕР И ФИЛЬТРАЦИЯ ---
+        function updateCategories() {
+            const select = document.getElementById('filterSelect');
+            const currentFilter = select.value;
+            
+            // Собираем уникальные категории
+            const types =[...new Set(partsDB.map(p => p.type).filter(t => t))].sort();
+            
+            select.innerHTML = '<option value="">📁 Все категории</option>';
+            types.forEach(type => {
+                const option = document.createElement('option');
+                option.value = type;
+                option.innerText = type;
+                select.appendChild(option);
+            });
+            select.value = currentFilter; // восстанавливаем выбор
+        }
+
         function renderParts() {
+            updateCategories();
             const list = document.getElementById('partsList');
-            list.innerHTML = ''; // Очищаем список перед обновлением
+            const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+            const filterQuery = document.getElementById('filterSelect').value;
+            
+            list.innerHTML = '';
 
-            partsDB.forEach((part, index) => {
+            // Фильтруем массив перед отрисовкой
+            const filteredParts = partsDB.filter(part => {
+                const searchMatch = part.name.toLowerCase().includes(searchQuery) || 
+                                   (part.type && part.type.toLowerCase().includes(searchQuery)) ||
+                                   (part.location && part.location.toLowerCase().includes(searchQuery));
+                const filterMatch = filterQuery ? part.type === filterQuery : true;
+                return searchMatch && filterMatch;
+            });
+
+            if (filteredParts.length === 0) {
+                list.innerHTML = '<p style="text-align:center; color: var(--sub-text);">Ничего не найдено</p>';
+                return;
+            }
+
+            filteredParts.forEach(part => {
                 const isOutOfStock = part.qty <= 0;
                 
                 list.innerHTML += `
                     <div class="card">
                         <div class="item">
-                            ${part.photo ? `<img src="${part.photo}" class="item-img">` : `<div class="item-img"></div>`}
+                            ${part.photo ? `<img src="${part.photo}" class="item-img">` : `<div class="item-img" style="display:flex; align-items:center; justify-content:center; font-size:24px;">📷</div>`}
                             <div class="item-info">
                                 <h3 class="item-name">${part.name}</h3>
                                 ${isOutOfStock 
                                     ? `<p class="item-qty out-of-stock">Нет в наличии</p>` 
-                                    : `<p class="item-qty">В наличии: <b>${part.qty}</b> шт.</p>`}
-                            </div>
-                            <div class="controls">
-                                <button class="btn-small btn-minus" onclick="changeQty(${index}, -1)" ${isOutOfStock ? 'disabled' : ''}>-</button>
-                                <button class="btn-small btn-plus" onclick="changeQty(${index}, 1)">+</button>
+                                    : `<p class="item-qty" style="color: var(--sub-text);">В наличии: <b style="color: var(--text-color);">${part.qty}</b> шт.</p>`}
+                                
+                                <div class="badges">
+                                    ${part.type ? `<span class="badge">📁 ${part.type}</span>` : ''}
+                                    ${part.package ? `<span class="badge">📦 ${part.package}</span>` : ''}
+                                    ${part.location ? `<span class="badge">📍 ${part.location}</span>` : ''}
+                                </div>
                             </div>
                         </div>
-                        <button class="btn-delete" onclick="deletePart(${index})">Удалить</button>
+                        <div class="controls">
+                            <button class="btn-small btn-minus" onclick="changeQty(${part.id}, -1)" ${isOutOfStock ? 'disabled' : ''}>-</button>
+                            <button class="btn-small btn-plus" onclick="changeQty(${part.id}, 1)">+</button>
+                            <button class="btn-delete" style="flex-grow: 1; margin-top: 0;" onclick="deletePart(${part.id})">Удалить</button>
+                        </div>
                     </div>
                 `;
             });
-            // Сохраняем в память телефона
+
             localStorage.setItem('radioPartsDB', JSON.stringify(partsDB));
         }
 
-        // Изменение количества
-        function changeQty(index, amount) {
-            partsDB[index].qty += amount;
-            if (partsDB[index].qty < 0) partsDB[index].qty = 0;
-            renderParts();
-        }
-
-        // Удаление детали
-        function deletePart(index) {
-            if(confirm("Точно удалить деталь?")) {
-                partsDB.splice(index, 1);
+        // --- 3. ЛОГИКА ДЕТАЛЕЙ ---
+        function changeQty(id, amount) {
+            const index = partsDB.findIndex(p => p.id === id);
+            if(index !== -1) {
+                partsDB[index].qty += amount;
+                if (partsDB[index].qty < 0) partsDB[index].qty = 0;
                 renderParts();
             }
         }
 
-        // Добавление новой детали
+        function deletePart(id) {
+            if(confirm("Точно удалить деталь?")) {
+                partsDB = partsDB.filter(p => p.id !== id);
+                renderParts();
+            }
+        }
+
         function addPart() {
             const nameInput = document.getElementById('partName');
             const qtyInput = document.getElementById('partQty');
+            const typeInput = document.getElementById('partType');
+            const packageInput = document.getElementById('partPackage');
+            const locationInput = document.getElementById('partLocation');
             const photoInput = document.getElementById('partPhoto');
 
-            if (!nameInput.value) {
-                alert("Введите название детали!");
-                return;
-            }
+            if (!nameInput.value) { alert("Введите название детали!"); return; }
 
             const newPart = {
+                id: Date.now() + Math.random(),
                 name: nameInput.value,
                 qty: parseInt(qtyInput.value) || 0,
+                type: typeInput.value.trim(),
+                package: packageInput.value.trim(),
+                location: locationInput.value.trim(),
                 photo: null
             };
 
-            // Если есть фото, сжимаем его и сохраняем
             if (photoInput.files && photoInput.files[0]) {
                 const file = photoInput.files[0];
                 const reader = new FileReader();
@@ -133,39 +280,77 @@
                     const img = new Image();
                     img.onload = function() {
                         const canvas = document.createElement('canvas');
-                        const MAX_WIDTH = 300; // Сжимаем до 300px
+                        const MAX_WIDTH = 300;
                         const scaleSize = MAX_WIDTH / img.width;
                         canvas.width = MAX_WIDTH;
                         canvas.height = img.height * scaleSize;
                         const ctx = canvas.getContext("2d");
                         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        
                         newPart.photo = canvas.toDataURL("image/jpeg", 0.7);
-                        partsDB.push(newPart);
-                        finishAdding();
+                        saveAndClear(newPart);
                     }
                     img.src = event.target.result;
                 }
                 reader.readAsDataURL(file);
             } else {
-                partsDB.push(newPart);
-                finishAdding();
+                saveAndClear(newPart);
             }
 
-            function finishAdding() {
-                nameInput.value = '';
-                qtyInput.value = '';
-                photoInput.value = '';
+            function saveAndClear(part) {
+                partsDB.unshift(part); // Добавляем в начало списка
+                nameInput.value = ''; qtyInput.value = ''; typeInput.value = ''; packageInput.value = ''; locationInput.value = ''; photoInput.value = '';
                 renderParts();
+                alert("Деталь добавлена!");
             }
         }
 
-        // Регистрируем Service Worker для работы офлайн
+        // --- 4. ИМПОРТ И ЭКСПОРТ (БЭКАП) ---
+        function exportDB() {
+            if(partsDB.length === 0) { alert("База пуста!"); return; }
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(partsDB));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            // Имя файла с текущей датой
+            const dateStr = new Date().toISOString().slice(0, 10);
+            downloadAnchorNode.setAttribute("download", `radio_parts_backup_${dateStr}.json`);
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+
+        function importDB(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    if (Array.isArray(importedData)) {
+                        if(confirm("Заменить текущую базу полностью? \n\n[ОК] - Заменить всё \n[Отмена] - Просто добавить новые к существующим")) {
+                            partsDB = importedData;
+                        } else {
+                            partsDB = partsDB.concat(importedData);
+                        }
+                        // Гарантируем наличие ID у импортированных
+                        partsDB.forEach(part => { if (!part.id) part.id = Date.now() + Math.random(); });
+                        renderParts();
+                        alert("База успешно загружена!");
+                    } else {
+                        alert("Файл не содержит массив деталей!");
+                    }
+                } catch (err) {
+                    alert("Ошибка чтения JSON файла!");
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = ''; // Сброс инпута
+        }
+
+        // Офлайн поддержка
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js');
         }
 
-        // Первая отрисовка при запуске
         renderParts();
     </script>
 </body>
