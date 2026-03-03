@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Мои детали</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/900/900780.png">
+    
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f2f2f7; margin: 0; padding: 20px; padding-top: 40px; color: #1c1c1e; }
+        h1 { text-align: center; font-size: 24px; margin-bottom: 20px; }
+        
+        .card { background: #fff; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .form-group { margin-bottom: 10px; }
+        .form-group label { display: block; font-size: 14px; margin-bottom: 5px; color: #8e8e93; }
+        .form-group input { width: 100%; padding: 10px; border: 1px solid #d1d1d6; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        button { background: #007aff; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 16px; font-weight: bold; width: 100%; cursor: pointer; }
+        button:active { background: #005bb5; }
+        
+        .item { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .item-info { flex-grow: 1; }
+        .item-name { font-weight: bold; font-size: 18px; margin: 0 0 5px 0; }
+        .item-qty { font-size: 16px; margin: 0; color: #3a3a3c; }
+        .out-of-stock { color: #ff3b30; font-weight: bold; }
+        .item-img { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; background: #e5e5ea; }
+        
+        .controls { display: flex; gap: 5px; }
+        .btn-small { width: 40px; height: 40px; padding: 0; font-size: 20px; border-radius: 8px; }
+        .btn-minus { background: #ff9500; }
+        .btn-plus { background: #34c759; }
+        .btn-delete { background: #ff3b30; margin-top: 10px;}
+    </style>
+</head>
+<body>
+
+    <h1>📦 База радиодеталей</h1>
+
+    <!-- Форма добавления -->
+    <div class="card">
+        <div class="form-group">
+            <label>Название детали</label>
+            <input type="text" id="partName" placeholder="Например: Резистор 10кОм">
+        </div>
+        <div class="form-group">
+            <label>Количество (шт)</label>
+            <input type="number" id="partQty" placeholder="0">
+        </div>
+        <div class="form-group">
+            <label>Фотография (опционально)</label>
+            <input type="file" id="partPhoto" accept="image/*">
+        </div>
+        <button onclick="addPart()">Добавить в базу</button>
+    </div>
+
+    <!-- Список деталей -->
+    <div id="partsList"></div>
+
+    <script>
+        // Загрузка базы из памяти телефона
+        let partsDB = JSON.parse(localStorage.getItem('radioPartsDB')) ||[];
+
+        // Функция отрисовки списка
+        function renderParts() {
+            const list = document.getElementById('partsList');
+            list.innerHTML = ''; // Очищаем список перед обновлением
+
+            partsDB.forEach((part, index) => {
+                const isOutOfStock = part.qty <= 0;
+                
+                list.innerHTML += `
+                    <div class="card">
+                        <div class="item">
+                            ${part.photo ? `<img src="${part.photo}" class="item-img">` : `<div class="item-img"></div>`}
+                            <div class="item-info">
+                                <h3 class="item-name">${part.name}</h3>
+                                ${isOutOfStock 
+                                    ? `<p class="item-qty out-of-stock">Нет в наличии</p>` 
+                                    : `<p class="item-qty">В наличии: <b>${part.qty}</b> шт.</p>`}
+                            </div>
+                            <div class="controls">
+                                <button class="btn-small btn-minus" onclick="changeQty(${index}, -1)" ${isOutOfStock ? 'disabled' : ''}>-</button>
+                                <button class="btn-small btn-plus" onclick="changeQty(${index}, 1)">+</button>
+                            </div>
+                        </div>
+                        <button class="btn-delete" onclick="deletePart(${index})">Удалить</button>
+                    </div>
+                `;
+            });
+            // Сохраняем в память телефона
+            localStorage.setItem('radioPartsDB', JSON.stringify(partsDB));
+        }
+
+        // Изменение количества
+        function changeQty(index, amount) {
+            partsDB[index].qty += amount;
+            if (partsDB[index].qty < 0) partsDB[index].qty = 0;
+            renderParts();
+        }
+
+        // Удаление детали
+        function deletePart(index) {
+            if(confirm("Точно удалить деталь?")) {
+                partsDB.splice(index, 1);
+                renderParts();
+            }
+        }
+
+        // Добавление новой детали
+        function addPart() {
+            const nameInput = document.getElementById('partName');
+            const qtyInput = document.getElementById('partQty');
+            const photoInput = document.getElementById('partPhoto');
+
+            if (!nameInput.value) {
+                alert("Введите название детали!");
+                return;
+            }
+
+            const newPart = {
+                name: nameInput.value,
+                qty: parseInt(qtyInput.value) || 0,
+                photo: null
+            };
+
+            // Если есть фото, сжимаем его и сохраняем
+            if (photoInput.files && photoInput.files[0]) {
+                const file = photoInput.files[0];
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 300; // Сжимаем до 300px
+                        const scaleSize = MAX_WIDTH / img.width;
+                        canvas.width = MAX_WIDTH;
+                        canvas.height = img.height * scaleSize;
+                        const ctx = canvas.getContext("2d");
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        
+                        newPart.photo = canvas.toDataURL("image/jpeg", 0.7);
+                        partsDB.push(newPart);
+                        finishAdding();
+                    }
+                    img.src = event.target.result;
+                }
+                reader.readAsDataURL(file);
+            } else {
+                partsDB.push(newPart);
+                finishAdding();
+            }
+
+            function finishAdding() {
+                nameInput.value = '';
+                qtyInput.value = '';
+                photoInput.value = '';
+                renderParts();
+            }
+        }
+
+        // Регистрируем Service Worker для работы офлайн
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+
+        // Первая отрисовка при запуске
+        renderParts();
+    </script>
+</body>
+</html>

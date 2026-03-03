@@ -1,0 +1,15 @@
+{
+  "name": "Мои Детали",
+  "short_name": "Детали",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f2f2f7",
+  "theme_color": "#007aff",
+  "icons":[
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/900/900780.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
